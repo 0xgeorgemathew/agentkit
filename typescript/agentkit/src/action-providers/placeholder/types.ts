@@ -9,6 +9,7 @@ export interface AuctionState {
   needsStrategyUpdate: boolean;
   lastStrategySuccess: boolean;
   currentPrice?: bigint;
+  competetorslastWinningBid?: bigint;
   marketConditions?: {
     priceRange: bigint;
     timeRemaining: bigint;

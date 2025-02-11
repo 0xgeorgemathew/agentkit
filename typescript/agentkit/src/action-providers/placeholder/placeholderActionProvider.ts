@@ -4,7 +4,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable multiline-comment-style */
-import { z } from "zod";
+import { bigint, z } from "zod";
 import { ActionProvider } from "../actionProvider";
 import { Network } from "../../network";
 import { CreateAction } from "../actionDecorator";
@@ -36,6 +36,7 @@ export class PlaceholderActionProvider
   private httpProvider? = new JsonRpcProvider(process.env.HTTP_RPC_URL);
   private activeWalletProvider?: EvmWalletProvider;
   private lastSuggestedPrice: string | null = null;
+  private auctiondetails: string = "";
 
   /**
    * Constructor for the PlaceholderActionProvider.
@@ -46,10 +47,36 @@ export class PlaceholderActionProvider
       throw new Error("PLACEHOLDER_CONTRACT_ADDRESS not set in environment");
     }
     this.contractAddress = process.env.PLACEHOLDER_CONTRACT_ADDRESS;
+    if (!this.auctionState) {
+      this.auctionState = {
+        isActive: true,
+        startTime: BigInt(0),
+        currentPrice: BigInt(0),
+        startPrice: BigInt(0),
+        endPrice: BigInt(0),
+        currentDisplay: 0,
+        maxDisplays: 0,
+        duration: BigInt(0),
+        needsStrategyUpdate: true,
+        lastStrategySuccess: false,
+        strategyMetrics: {
+          successRate: 0,
+          averageBidPrice: BigInt(0),
+          displayProgress: {
+            acquired: 0,
+            remaining: 0,
+          },
+        },
+      };
+    }
+    if (!this.auctionState.totalAuctions) {
+      this.auctionState.totalAuctions = 0;
+    }
     //assing at random strategy
     const strategyNames = Object.keys(strategies);
     this.currentStrategy =
       strategies[strategyNames[Math.floor(Math.random() * strategyNames.length)]];
+
     // this.auctionState.maxDisplays = 5;
   }
   @CreateAction({
@@ -80,6 +107,7 @@ export class PlaceholderActionProvider
     Determine the optimal bid price based on the current strategy and market conditions.
     Returns a suggested bid price and explanation.
     The price should follow the current strategy's guidelines.
+
     `,
     schema: SelectPriceSchema,
   })
@@ -94,7 +122,8 @@ export class PlaceholderActionProvider
     name: "auction_details",
     description: `
   This tool will Return the current state of the Placeholder Ads auction.
-  
+  This is a dutch auction.
+  If current price is zero a new auction will start soon.
   It returns the following details:
   - isActive: Whether the auction is active or not
   - startPrice: The starting price of the auction
@@ -104,7 +133,8 @@ export class PlaceholderActionProvider
   - needsStrategyUpdate: Wheather the strategy needs to be updated or not
   - lastStrategySuccess: Whether the last bid was successful or not
   - currentPrice: The current price of the auction
-  
+  - lastAuctionResult: The result of the last auction
+  - strategyMetrics: The metrics of the current strategy
   It takes no inputs.
   `,
     schema: z.object({}),
@@ -135,6 +165,16 @@ export class PlaceholderActionProvider
     "lastSuccessfulBid:" ${this.auctionState.lastAuctionResult?.wasWinner}
     "needsStrategyUpdate:" ${this.auctionState.needsStrategyUpdate}
     "currentPrice:" ${this.auctionState.currentPrice}
+    "lastStrategySuccess:" ${this.auctionState.lastStrategySuccess}
+    "wasWinner:" ${this.auctionState.lastAuctionResult?.wasWinner}
+    "winner:" ${this.auctionState.lastAuctionResult?.winner}
+    "winningBid:" ${this.auctionState.lastAuctionResult?.winningBid}
+    "strategyMetrics":
+    "successRate:" ${this.auctionState.strategyMetrics?.successRate}
+    "averageBidPrice:" ${this.auctionState.strategyMetrics?.averageBidPrice}
+    "displayProgress":
+    "acquired:" ${this.auctionState.strategyMetrics?.displayProgress?.acquired}
+    "remaining:" ${this.auctionState.strategyMetrics?.displayProgress?.remaining}
     `;
     return response;
   }
@@ -159,6 +199,7 @@ export class PlaceholderActionProvider
     `,
     schema: PlaceBidSchema,
   })
+  //
   async placeBid(
     walletProvider: EvmWalletProvider,
     args: z.infer<typeof PlaceBidSchema>,
@@ -170,7 +211,11 @@ export class PlaceholderActionProvider
         return "Auction is not active yet.";
       }
       const parsedAmount = parseUnits(args.bidAmount, 18);
-
+      if (!this.auctionState.bidHistory) {
+        this.auctionState.bidHistory = [];
+      }
+      this.auctionState.bidHistory!.push(parsedAmount);
+      console.log("Bid history Updated");
       console.log("Placing bid for token", args.tokenId, "with USD amount", args.bidAmount);
       const txData = encodeFunctionData({
         abi,
@@ -227,6 +272,10 @@ export class PlaceholderActionProvider
     this.activeWalletProvider = walletProvider;
 
     const contract = new ethers.Contract(this.contractAddress, abi, this.wssProvider);
+    if (!this.auctionState.totalAuctions) {
+      this.auctionState.totalAuctions = 0;
+    }
+    this.auctiondetails = await this.getAuctionDetails();
 
     await this.setupEventListeners(contract);
     console.log("Started monitoring auction events");
@@ -289,7 +338,11 @@ export class PlaceholderActionProvider
           console.log(`  Token ID:     ${tokenId.toString()}`);
           console.log("-----------------------------");
           this.auctionState.isActive = false;
-          if (winner === "0xbb02a9D6A71A847D587cE4Dbb92F32f79c2EfB2a") {
+          if (!this.auctionState.totalAuctions) {
+            this.auctionState.totalAuctions = 0;
+          }
+          this.auctionState.totalAuctions = this.auctionState.totalAuctions! + 1;
+          if (winner === process.env.WALLET_ADDRESS) {
             this.auctionState.currentDisplay++;
             console.log("Auction won!");
             this.auctionState = {
@@ -309,11 +362,11 @@ export class PlaceholderActionProvider
               await this.evaluateAndUpdateStrategy(true);
             }
 
-            await this.getAuctionDetails();
-
             this.evaluateAndUpdateStrategy(true);
           } else {
             console.log("❌ Auction lost!");
+            this.auctionState.competetorslastWinningBid = winningBid;
+            await this.getAuctionDetails();
             await this.evaluateAndUpdateStrategy(false);
           }
         },
@@ -447,14 +500,11 @@ export class PlaceholderActionProvider
    */
   private async evaluateAndUpdateStrategy(wasSuccessful: boolean) {
     try {
-      const currentPrice = await this.getCurrentPrice();
-
       // Update auction state with latest information
       this.auctionState = {
         ...this.auctionState,
         needsStrategyUpdate: true,
         lastStrategySuccess: wasSuccessful,
-        currentPrice: currentPrice,
         strategyMetrics: {
           successRate: this.calculateSuccessRate(),
           averageBidPrice: this.calculateAverageBidPrice(),
@@ -464,12 +514,11 @@ export class PlaceholderActionProvider
           },
         },
       };
-
+      await this.getAuctionDetails();
       // Log comprehensive strategy evaluation info
       console.log("\n📊 Strategy Evaluation Triggered");
       console.log(`  Current Strategy: ${this.currentStrategy.name}`);
       console.log(`  Result: ${wasSuccessful ? "✅ Success" : "❌ Failed"}`);
-      console.log(`  Current Price: ${ethers.formatUnits(currentPrice, 18)} USD`);
       console.log(
         `  Displays: ${this.auctionState.currentDisplay}/${this.auctionState.maxDisplays}`,
       );
@@ -485,6 +534,9 @@ export class PlaceholderActionProvider
   }
   // Helper methods for strategy evaluation
   private calculateSuccessRate(): number {
+    if (!this.auctionState.totalAuctions) {
+      this.auctionState.totalAuctions = 0;
+    }
     const total = this.auctionState.totalAuctions || 0;
     const wins = this.auctionState.currentDisplay;
     return total > 0 ? (wins / total) * 100 : 0;

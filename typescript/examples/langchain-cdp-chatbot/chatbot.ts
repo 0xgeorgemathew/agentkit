@@ -165,7 +165,10 @@ async function initializeAgent() {
       httpProvider,
     );
     const tokenIds = await placeholderNFT.getOwnedTokens(process.env.WALLET_ADDRESS!);
-    const lastTokenId = tokenIds.length - 1;
+    // Select the last element in the array
+    const lastTokenId = Number(tokenIds[tokenIds.length - 1].toString());
+    // convert it into a regular number
+    console.log("lastTokenId", lastTokenId);
 
     const tools = await getLangChainTools(agentkit);
 
@@ -190,6 +193,7 @@ async function initializeAgent() {
     You have three actions available:
 
     1. select_strategy: Choose bidding approach
+        - auction_details: Get auction details , call this before selecting strategy
        - aggressive: Bid at current price
        - patient: Wait for 50% price drop
        - conservative: Wait for 80% price drop
@@ -198,15 +202,17 @@ async function initializeAgent() {
        - First to bid always wins.
 
     2. select_price: Set the bid amount
+      - auction_details: Get auction details , call this before selecting price
        - Consider current price and strategy
        - Provide reasoning for the price
    
 
-    3. Always use ${lastTokenId} as token Id for calling place bid and Price in USD
+    3. Always use ${lastTokenId} as token Id for calling place bid and do not change it for future bids and Price in USD
      place_bid: Execute the bid by calling the placeBid function with ${lastTokenId} as first argument and the bid amount in USD as second argument
 
     Process for each auction:
     1. First select strategy based on:
+        - auction_details: Get auction details , call this before selecting strategy
         - Remember This is a Dutch Auction.
         - Price starts high and decreases linear.
         - First to bid always wins.
@@ -216,6 +222,7 @@ async function initializeAgent() {
         - Anticipate opponent behavior,
 
     2. Then select price based on:
+       - auction_details: Get auction details , call this before selecting price
        - Chosen strategy
        - Current market conditions
        - Budget efficiency
@@ -224,6 +231,8 @@ async function initializeAgent() {
     3. Finally place bid if conditions are right
 
     Always explain your reasoning for each decision.
+
+    You can auction_details at any point to get addtional context.
     `,
     });
 
