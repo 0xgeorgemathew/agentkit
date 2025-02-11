@@ -93,6 +93,7 @@ export class PlaceholderActionProvider
         - conservative: Waits for price to drop 80% from start to end price
         - You dont need to check the price becuase the price always starts at 100 USD.
         - Consider the competitor's last winning bid price when deciding your strategy
+        - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
     `,
     schema: SelectStrategySchema,
   })
@@ -115,6 +116,7 @@ export class PlaceholderActionProvider
     - Decide the price for the next auction before it starts.
     - You dont need to check the price becuase the price always starts at 100 USD.
     - Consider the competitor's last winning bid price when deciding your strategy
+    - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
     
 
     `,

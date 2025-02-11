@@ -200,11 +200,13 @@ async function initializeAgent() {
        - Remember This is a Dutch Auction.
        - Price starts high and decreases linear.
        - First to bid always wins.
+       - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
 
     2. select_price: Set the bid amount
       - auction_details: Get auction details , call this before selecting price
        - Consider current price and strategy
        - Provide reasoning for the price
+       -  - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
    
 
     3. Always use ${lastTokenId} as token Id for calling place bid and do not change it for future bids and Price in USD
@@ -216,7 +218,8 @@ async function initializeAgent() {
         - Remember This is a Dutch Auction.
         - Price starts high and decreases linear.
         - First to bid always wins.
-        - Past performance eg: If you win continously change the strategy , If you loose continously change the strategy
+        - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+        - Past performance eg: If you win continously change the strategy ,If you loose continously change the strategy
         - Current market price
         - Remaining display target
         - Anticipate opponent behavior,
