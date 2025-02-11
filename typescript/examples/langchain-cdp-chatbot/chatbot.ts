@@ -220,6 +220,9 @@ async function initializeAgent() {
         - Current market price
         - Remaining display target
         - Anticipate opponent behavior,
+        - Decide the price for the next bid before the auction starts.
+        - You dont need to check the price since the price always starts at 100 USD.
+        -  Consider the competitor's last winning bid price when deciding your strategy
 
     2. Then select price based on:
        - auction_details: Get auction details , call this before selecting price
@@ -227,6 +230,9 @@ async function initializeAgent() {
        - Current market conditions
        - Budget efficiency
        - Remember This is a Dutch Auction, Price starts high and decreases linear.
+        - Price starts at 100 USD always and decreases linear.
+        - If an auction has ended the new price always starts at 100 USD.
+        -  Consider the competitor's last winning bid price when deciding your price
 
     3. Finally place bid if conditions are right
 

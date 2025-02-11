@@ -85,11 +85,14 @@ export class PlaceholderActionProvider
     Select a bidding strategy based on current market conditions and past performance.
     Available strategies:
         - Remember This is a Dutch Auction.
-        - Price starts high and decreases linear.
+        - Price starts at 100 USD always and decreases linear.
+        - If an auction has ended the new price always starts at 100 USD.
         - First to bid always wins.
         - aggressive: Bids at current price immediately
         - patient: Waits for price to drop 50% from start to end price
         - conservative: Waits for price to drop 80% from start to end price
+        - You dont need to check the price becuase the price always starts at 100 USD.
+        - Consider the competitor's last winning bid price when deciding your strategy
     `,
     schema: SelectStrategySchema,
   })
@@ -107,6 +110,12 @@ export class PlaceholderActionProvider
     Determine the optimal bid price based on the current strategy and market conditions.
     Returns a suggested bid price and explanation.
     The price should follow the current strategy's guidelines.
+    - Price starts at 100 USD always and decreases linear.
+    - If an auction has ended the new price always starts at 100 USD.
+    - Decide the price for the next auction before it starts.
+    - You dont need to check the price becuase the price always starts at 100 USD.
+    - Consider the competitor's last winning bid price when deciding your strategy
+    
 
     `,
     schema: SelectPriceSchema,
@@ -135,6 +144,9 @@ export class PlaceholderActionProvider
   - currentPrice: The current price of the auction
   - lastAuctionResult: The result of the last auction
   - strategyMetrics: The metrics of the current strategy
+  - competetorslastWinningBid : The last winning bid of the competetors
+  - totalAuctions : The total number of auctions started
+  - bidHistory : The history of bids
   It takes no inputs.
   `,
     schema: z.object({}),
@@ -175,6 +187,9 @@ export class PlaceholderActionProvider
     "displayProgress":
     "acquired:" ${this.auctionState.strategyMetrics?.displayProgress?.acquired}
     "remaining:" ${this.auctionState.strategyMetrics?.displayProgress?.remaining}
+    "competetorslastWinningBid": ${this.auctionState.competetorslastWinningBid}
+    "totalAuctions": ${this.auctionState.totalAuctions}
+    "bidHistory": ${this.auctionState.bidHistory}
     `;
     return response;
   }
