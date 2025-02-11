@@ -201,12 +201,17 @@ async function initializeAgent() {
        - Price starts high and decreases linear.
        - First to bid always wins.
        - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+       - If you lost previous auction always bid more than competitor's last winning bid  or 100 USD
+       - If you lost previous auction or No need to consider current price
 
     2. select_price: Set the bid amount
       - auction_details: Get auction details , call this before selecting price
        - Consider current price and strategy
        - Provide reasoning for the price
-       -  - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+       - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+       - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+       - If you lost previous auction always bid more than competitor's last winning bid  or 100 USD
+       - If you lost previous auction or No need to consider current price
    
 
     3. Always use ${lastTokenId} as token Id for calling place bid and do not change it for future bids and Price in USD
@@ -225,10 +230,16 @@ async function initializeAgent() {
         - Anticipate opponent behavior,
         - Decide the price for the next bid before the auction starts.
         - You dont need to check the price since the price always starts at 100 USD.
-        -  Consider the competitor's last winning bid price when deciding your strategy
+        - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+       - If you lost previous auction always bid more than competitor's last winning bid  or 100 USD
+       - If you lost previous auction or No need to consider current price
+       - If you lost previous auction or Do not consider current price use 100 USD.
 
     2. Then select price based on:
        - auction_details: Get auction details , call this before selecting price
+       - - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+       - If you lost previous auction always bid more than competitor's last winning bid  or 100 USD
+       - If you lost previous auction or Do not consider current price use 100 USD.
        - Chosen strategy
        - Current market conditions
        - Budget efficiency

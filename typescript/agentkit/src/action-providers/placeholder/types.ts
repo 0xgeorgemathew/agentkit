@@ -16,10 +16,10 @@ export interface AuctionState {
     priceDropRate: bigint;
   };
   lastAuctionResult?: {
-    winner: string;
-    winningBid: bigint;
-    wasWinner: boolean;
-    tokenId: bigint;
+    winner?: string;
+    winningBid?: bigint;
+    wasWinner?: boolean;
+    tokenId?: bigint;
   };
   strategyMetrics?: {
     successRate: number;

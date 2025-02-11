@@ -84,6 +84,9 @@ export class PlaceholderActionProvider
     description: `
     Select a bidding strategy based on current market conditions and past performance.
     Available strategies:
+        - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+        - If you lost previous auction always bid more than competitor's last winning bid price or 100 USD
+        - If you lost previous auction or No need to consider current price
         - Remember This is a Dutch Auction.
         - Price starts at 100 USD always and decreases linear.
         - If an auction has ended the new price always starts at 100 USD.
@@ -93,7 +96,8 @@ export class PlaceholderActionProvider
         - conservative: Waits for price to drop 80% from start to end price
         - You dont need to check the price becuase the price always starts at 100 USD.
         - Consider the competitor's last winning bid price when deciding your strategy
-        - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+        - - If you lost previous auction or Do not consider current price use 100 USD.
+
     `,
     schema: SelectStrategySchema,
   })
@@ -108,6 +112,7 @@ export class PlaceholderActionProvider
   @CreateAction({
     name: "select_price",
     description: `
+    - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
     Determine the optimal bid price based on the current strategy and market conditions.
     Returns a suggested bid price and explanation.
     The price should follow the current strategy's guidelines.
@@ -116,7 +121,7 @@ export class PlaceholderActionProvider
     - Decide the price for the next auction before it starts.
     - You dont need to check the price becuase the price always starts at 100 USD.
     - Consider the competitor's last winning bid price when deciding your strategy
-    - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+    -- If you lost previous auction or Do not consider current price use 100 USD.
     
 
     `,
@@ -149,6 +154,10 @@ export class PlaceholderActionProvider
   - competetorslastWinningBid : The last winning bid of the competetors
   - totalAuctions : The total number of auctions started
   - bidHistory : The history of bids
+  - If you lost previous auction or Do not consider current price use 100 USD.
+  - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
+  - If you lost previous auction always bid more than competitor's last winning bid price or 100 USD
+  - If you lost previous auction or No need to consider current price
   It takes no inputs.
   `,
     schema: z.object({}),
@@ -382,7 +391,12 @@ export class PlaceholderActionProvider
             this.evaluateAndUpdateStrategy(true);
           } else {
             console.log("❌ Auction lost!");
+
             this.auctionState.competetorslastWinningBid = winningBid;
+            this.auctionState.lastAuctionResult = {
+              wasWinner: false,
+            };
+
             await this.getAuctionDetails();
             await this.evaluateAndUpdateStrategy(false);
           }
