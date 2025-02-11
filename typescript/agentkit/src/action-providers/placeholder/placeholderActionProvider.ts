@@ -84,9 +84,8 @@ export class PlaceholderActionProvider
     description: `
     Select a bidding strategy based on current market conditions and past performance.
     Available strategies:
-        - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
         - If you lost previous auction always bid more than competitor's last winning bid price or 100 USD
-        - If you lost previous auction or No need to consider current price
+        - If you lost previous auction or Do not consider current price use 100 USD.
         - Remember This is a Dutch Auction.
         - Price starts at 100 USD always and decreases linear.
         - If an auction has ended the new price always starts at 100 USD.
@@ -96,7 +95,6 @@ export class PlaceholderActionProvider
         - conservative: Waits for price to drop 80% from start to end price
         - You dont need to check the price becuase the price always starts at 100 USD.
         - Consider the competitor's last winning bid price when deciding your strategy
-        - - If you lost previous auction or Do not consider current price use 100 USD.
 
     `,
     schema: SelectStrategySchema,
@@ -139,7 +137,6 @@ export class PlaceholderActionProvider
     description: `
   This tool will Return the current state of the Placeholder Ads auction.
   This is a dutch auction.
-  If current price is zero a new auction will start soon.
   It returns the following details:
   - isActive: Whether the auction is active or not
   - startPrice: The starting price of the auction
@@ -155,9 +152,6 @@ export class PlaceholderActionProvider
   - totalAuctions : The total number of auctions started
   - bidHistory : The history of bids
   - If you lost previous auction or Do not consider current price use 100 USD.
-  - If you loose an auction always bid more than competitor's last winning bid price or 100 USD
-  - If you lost previous auction always bid more than competitor's last winning bid price or 100 USD
-  - If you lost previous auction or No need to consider current price
   It takes no inputs.
   `,
     schema: z.object({}),
